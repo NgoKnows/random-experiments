@@ -67,20 +67,18 @@ export default class ExpandingButton extends Component {
     }
 
     getButtonPosition(childIndex) {
-        let { deltaX, deltaY } = finalDeltaPositions(childIndex);
-        deltaX += (CHILD_BUTTON_DIAM / 2);
-        deltaY += (CHILD_BUTTON_DIAM / 2);
+        const { deltaX, deltaY } = finalDeltaPositions(childIndex);
 
         if (this.state.isOpen) {
             return {
-                deltaX: spring(deltaX, BUTTONS_OUT_SPRING),
-                deltaY: spring(deltaY, BUTTONS_OUT_SPRING)
+                left: spring(M_X + deltaX, BUTTONS_OUT_SPRING),
+                top: spring(M_Y - deltaY, BUTTONS_OUT_SPRING)
             };
         }
 
         return {
-            deltaX: spring(0, BUTTONS_IN_SPRING),
-            deltaY: spring(0, BUTTONS_IN_SPRING)
+            left: spring(M_X - (CHILD_BUTTON_DIAM / 2), BUTTONS_IN_SPRING),
+            top: spring(M_Y - (CHILD_BUTTON_DIAM / 2), BUTTONS_IN_SPRING),
         };
     }
 
@@ -105,8 +103,8 @@ export default class ExpandingButton extends Component {
         return (
             buttons.map((button, index) => (
                 <Motion key={index} style={this.getButtonPosition(index)}>
-                    {({ deltaX, deltaY }) => (
-                        <div style={[STYLES.miniButton, { transform: `translate(${deltaX}px, -${deltaY}px)` }]}>
+                    {({ top, left }) => (
+                        <div style={[STYLES.miniButton, { top, left }]}>
                             <FontAwesome name={button.icon} style={STYLES.icon} />
                         </div>
                     )}
@@ -118,33 +116,22 @@ export default class ExpandingButton extends Component {
 
 const STYLES = {
     button: {
-        // layout
         position: 'absolute',
         top: M_Y - (MAIN_BUTTON_DIAM / 2),
         left: M_X - (MAIN_BUTTON_DIAM / 2),
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-
-        // presentational
-        backgroundColor: '#1976D2',
         width: MAIN_BUTTON_DIAM,
         height: MAIN_BUTTON_DIAM,
+        backgroundColor: '#1976D2',
         borderRadius: '50%',
         zIndex: 1,
         cursor: 'pointer'
     },
 
     miniButton: {
-        // layout
         position: 'absolute',
-        top: M_Y - (CHILD_BUTTON_DIAM / 2),
-        left: M_X - (CHILD_BUTTON_DIAM / 2),
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-
-        // presentational
         width: CHILD_BUTTON_DIAM,
         height: CHILD_BUTTON_DIAM,
         backgroundColor: '#64B5F6',
