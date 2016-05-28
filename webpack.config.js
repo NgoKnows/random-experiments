@@ -2,6 +2,11 @@ var path = require('path');
 var webpack = require('webpack');
 var ROOT_DIR = __dirname;
 
+// PostCSS plugins
+const cssnext = require('postcss-cssnext');
+const postcssFocus = require('postcss-focus');
+const postcssReporter = require('postcss-reporter');
+
 module.exports = {
     context: ROOT_DIR,
 
@@ -38,6 +43,7 @@ module.exports = {
                 exclude: path.join(ROOT_DIR, 'node_modules'),
                 query: {
                     presets: ['es2015', 'react', 'stage-1'],
+                    plugins: ['transform-decorators-legacy'],
                     env: {
                         development: {
                             presets: ['react-hmre']
@@ -53,7 +59,7 @@ module.exports = {
 
             {
                 test: /\.css$/,
-                loader: 'style-loader!css-loader'
+                loader: 'style-loader!css-loader?localIdentName=[local]__[path][name]__[hash:base64:5]&modules&importLoaders=1&sourceMap!postcss-loader'
             },
 
             {
@@ -61,5 +67,15 @@ module.exports = {
                 loader: 'json-loader'
             }
         ]
-    }
+    },
+
+    postcss: () => (
+        [
+            postcssFocus(), // Add a :focus to every :hover
+            cssnext(),
+            postcssReporter({ // Posts messages from plugins to the terminal
+                clearMessages: true,
+            })
+        ]
+    )
 };
