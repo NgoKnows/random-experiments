@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import ExpandingButton from 'components/ExpandingButton/ExpandingButton';
+import ExpandingButton2 from 'components/ExpandingButton/ExpandingButton2';
+
 
 export default class App extends Component {
     static defaultProps = {};
@@ -10,11 +12,15 @@ export default class App extends Component {
         const { } = this.props;
 
         return (
-            <div>
+            <div style={STYLES}>
                 <ExpandingButton />
+                <ExpandingButton2 />
             </div>
         );
     }
 }
 
-const STYLES = {};
+const STYLES = {
+    height: 2000,
+    width: 2000
+};

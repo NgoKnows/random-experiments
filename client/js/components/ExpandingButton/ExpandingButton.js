@@ -1,18 +1,19 @@
 import React, { Component } from 'react';
 import Radium from 'radium';
-import { Motion, spring } from 'react-motion';
+import { Motion, StaggeredMotion, spring } from 'react-motion';
 import FontAwesome from 'react-fontawesome';
+import { range } from 'lodash';
 
 //Constants
 // Value of 1 degree in radians
 const DEG_TO_RAD = 0.0174533;
 // Diameter of the main button in pixels
 const MAIN_BUTTON_DIAM = 90;
-const CHILD_BUTTON_DIAM = 50;
+const CHILD_BUTTON_DIAM = 60;
 // The number of child buttons that fly out from the main button
 const NUM_CHILDREN = 5;
 // Hard coded position values of the mainButton
-const M_X = 490;
+const M_X = 590;
 const M_Y = 450;
 
 // How far away from the main button does the child buttons go
@@ -27,15 +28,14 @@ const BUTTONS_IN_SPRING = { stiffness: 400, damping: 20 };
 
 // Since JS Math. functions accept value of angle in radians and we've been working in degrees we will need to convert
 // degrees to radians first.
-function toRadians(degrees) {
-    return degrees * DEG_TO_RAD;
-}
+const toRadians = (degrees) => degrees * DEG_TO_RAD;
 
-function finalDeltaPositions(index) {
+function deltaPositions(index, percent) {
     const angle = BASE_ANGLE + (index * SEPARATION_ANGLE);
+
     return {
-        deltaX: FLY_OUT_RADIUS * Math.cos(toRadians(angle)) - (CHILD_BUTTON_DIAM / 2),
-        deltaY: FLY_OUT_RADIUS * Math.sin(toRadians(angle)) + (CHILD_BUTTON_DIAM / 2)
+        deltaX: FLY_OUT_RADIUS * Math.cos(toRadians(angle)) * percent,
+        deltaY: FLY_OUT_RADIUS * Math.sin(toRadians(angle)) * percent
     };
 }
 
@@ -57,30 +57,23 @@ export default class ExpandingButton extends Component {
 
     state : { isOpen: boolean };
 
-    initialChildButtonStyles() {
-        return {
-            width: CHILD_BUTTON_DIAM,
-            height: CHILD_BUTTON_DIAM,
-            top: M_Y - (CHILD_BUTTON_DIAM / 2),
-            left: M_X - (CHILD_BUTTON_DIAM / 2)
-        };
+    constructor(props) {
+        super(props);
+
+        this.openMenu = this.openMenu.bind(this);
     }
 
-    getButtonPosition(childIndex) {
-        let { deltaX, deltaY } = finalDeltaPositions(childIndex);
-        deltaX += (CHILD_BUTTON_DIAM / 2);
-        deltaY += (CHILD_BUTTON_DIAM / 2);
+    childButtonStyle(idx, percent) {
+        const { deltaX, deltaY } = deltaPositions(idx, percent);
 
         if (this.state.isOpen) {
             return {
-                deltaX: spring(deltaX, BUTTONS_OUT_SPRING),
-                deltaY: spring(deltaY, BUTTONS_OUT_SPRING)
+                transform: `translate(${deltaX}px, -${deltaY}px)`
             };
         }
 
         return {
-            deltaX: spring(0, BUTTONS_IN_SPRING),
-            deltaY: spring(0, BUTTONS_IN_SPRING)
+            transform: `translate(${0}px, ${0}px)`
         };
     }
 
@@ -90,30 +83,78 @@ export default class ExpandingButton extends Component {
 
     render() {
         const { isOpen, buttons } = this.state;
+        const goalPercent = isOpen ? 1.0 : 0.0;
+
+        const springParams = { stiffness: 210, damping: 20 };
+        const defaultStyles = buttons.map(() => ({ percent: 0.0 }));
+
+        const nextStyles = (previousStyles) => {
+            return previousStyles.map((prev, i) => {
+                if (i === 0) {
+                    return { percent: spring(goalPercent, springParams) };
+                } else {
+                    const lastButtonPreviousPercent = previousStyles[i - 1].percent;
+                    const thisButtonPreviousPercent = previousStyles[i].percent;
+                    const shouldThisAnimate = isOpen ?
+                        lastButtonPreviousPercent > 0.2 :
+                        lastButtonPreviousPercent < 0.8;
+
+                    return { percent: shouldThisAnimate ? spring(goalPercent, springParams) : thisButtonPreviousPercent };
+                }
+            })
+        }
 
         return (
             <div>
-                <div style={STYLES.button} onClick={() => this.openMenu()} />
-                {this.renderMenuButtons()}
+                <StaggeredMotion defaultStyles={defaultStyles} styles={nextStyles}>
+                    {(interpolatedStyles) => {
+                        const leaderPercent = interpolatedStyles[0].percent;
+
+                        return (
+                            <div>
+                                {interpolatedStyles.map(({ percent }, idx) => {
+                                    const style = this.childButtonStyle(idx, percent);
+
+                                    return (
+                                        <div key={idx} style={[STYLES.menuButton, style]}>
+                                            <FontAwesome name={buttons[idx].icon} style={STYLES.icon} size="2x" />
+                                        </div>
+                                    )
+                                })}
+                                <div style={STYLES.button} onClick={this.openMenu}>
+                                    <FontAwesome name="times" style={STYLES.icon} size='3x'/>
+                                </div>
+                            </div>
+                        );
+                    }}
+                </StaggeredMotion>
             </div>
         );
     }
 
-    renderMenuButtons() {
-        const { isOpen, buttons } = this.state;
-
-        return (
-            buttons.map((button, index) => (
-                <Motion key={index} style={this.getButtonPosition(index)}>
-                    {({ deltaX, deltaY }) => (
-                        <div style={[STYLES.miniButton, { transform: `translate(${deltaX}px, -${deltaY}px)` }]}>
-                            <FontAwesome name={button.icon} style={STYLES.icon} />
-                        </div>
-                    )}
-                </Motion>
-            )
-        ));
-    }
+    // renderMenuButtons() {
+    //     const { isOpen, buttons } = this.state;
+    //
+    //     const menuButtonStyles = buttons.map((button, index) => getMenuButtonPosition(index));
+    //
+    //     return (
+    //         <StaggeredMotion
+    //             defaultStyles={menuButtonStyles}
+    //         >
+    //         buttons.map((button, index) => (
+    //                 {({ deltaX, deltaY }) => (
+    //                     <div key="index"
+    //                         style={[
+    //                             STYLES.menuButton,
+    //                             { transform: `translate(${deltaX}px, -${deltaY}px)` }
+    //                         ]}
+    //                     >
+    //                         <FontAwesome name={button.icon} style={STYLES.icon} size="2x" />
+    //                     </div>
+    //                 )}
+    //         )
+    //     ));
+    // }
 }
 
 const STYLES = {
@@ -135,7 +176,7 @@ const STYLES = {
         cursor: 'pointer'
     },
 
-    miniButton: {
+    menuButton: {
         // layout
         position: 'absolute',
         top: M_Y - (CHILD_BUTTON_DIAM / 2),
@@ -143,6 +184,7 @@ const STYLES = {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        willChange: 'transform',
 
         // presentational
         width: CHILD_BUTTON_DIAM,
@@ -153,6 +195,7 @@ const STYLES = {
     },
 
     icon: {
-        color: 'white'
+        color: 'white',
+        zIndex: 2
     }
 }
