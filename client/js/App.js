@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import ExpandingButton from 'components/ExpandingButton/ExpandingButton';
 import ExpandingButton2 from 'components/ExpandingButton/ExpandingButton2';
+import TabBar from 'components/TabBar/TabBar';
 
 
 export default class App extends Component {
@@ -14,7 +15,7 @@ export default class App extends Component {
         return (
             <div style={STYLES}>
                 <ExpandingButton />
-                <ExpandingButton2 />
+                <TabBar />
             </div>
         );
     }

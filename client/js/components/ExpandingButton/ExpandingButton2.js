@@ -1,145 +1,118 @@
-import React, { Component } from 'react';
-import Radium from 'radium';
-import { Motion, spring } from 'react-motion';
-import FontAwesome from 'react-fontawesome';
+import React from "react";
 
-//Constants
-// Value of 1 degree in radians
-const DEG_TO_RAD = 0.0174533;
-// Diameter of the main button in pixels
-const MAIN_BUTTON_DIAM = 90;
+import { Motion, StaggeredMotion, spring } from "react-motion";
+import { constant, range } from "lodash";
+
+const DEG_TO_RAD = Math.PI / 180;
+const MAIN_BUTTON_DIAM = 100;
 const CHILD_BUTTON_DIAM = 50;
-// The number of child buttons that fly out from the main button
-const NUM_CHILDREN = 5;
-// Hard coded position values of the mainButton
-const M_X = 290;
+const CHILDREN_ICONS = [
+  "at", "linkedin", "facebook", "github", "twitter"
+];
+
+const M_X = 500;
 const M_Y = 450;
 
-// How far away from the main button does the child buttons go
-const FLY_OUT_RADIUS = 120;
-const SEPARATION_ANGLE = 40; // degrees
-const FAN_ANGLE = (NUM_CHILDREN - 1) * SEPARATION_ANGLE; // degrees
-const BASE_ANGLE = ((180 - FAN_ANGLE) / 2); // degrees
+const FLYOUT_RADIUS = 120;
+const SEPARATION_ANGLE = 40;
+const FAN_ANGLE = (CHILDREN_ICONS.length - 1) * SEPARATION_ANGLE;
+const BASE_ANGLE = (180 - FAN_ANGLE) / 2;
 
-const BUTTONS_OUT_SPRING = { stiffness: 400, damping: 8 };
-const BUTTONS_IN_SPRING = { stiffness: 400, damping: 20 };
-// Utility functions
+const toRadians = (deg) => deg * DEG_TO_RAD;
 
-// Since JS Math. functions accept value of angle in radians and we've been working in degrees we will need to convert
-// degrees to radians first.
-function toRadians(degrees) {
-    return degrees * DEG_TO_RAD;
-}
+const deltaPosition = (idx, percent) => {
+  const angle = BASE_ANGLE + idx * SEPARATION_ANGLE;
+  const dX = FLYOUT_RADIUS * Math.cos(toRadians(angle)) * percent;
+  const dY = FLYOUT_RADIUS * Math.sin(toRadians(angle)) * percent;
+  return {
+    dX: dX + CHILD_BUTTON_DIAM / 2,
+    dY: dY + CHILD_BUTTON_DIAM / 2
+  };
+};
 
-function finalDeltaPositions(index) {
-    const angle = BASE_ANGLE + (index * SEPARATION_ANGLE);
+export default class Application extends React.Component {
+  constructor(...args) {
+    super(...args);
+
+    this.state = {
+      isOpen: false
+    };
+
+    this.toggleMenu = this.toggleMenu.bind(this);
+  }
+
+  mainButtonStyles(percent) {
+    const deg = 135 * percent;
+
     return {
-        deltaX: FLY_OUT_RADIUS * Math.cos(toRadians(angle)) - (CHILD_BUTTON_DIAM / 2),
-        deltaY: FLY_OUT_RADIUS * Math.sin(toRadians(angle)) + (CHILD_BUTTON_DIAM / 2)
+      width: MAIN_BUTTON_DIAM,
+      height: MAIN_BUTTON_DIAM,
+      top: M_Y - MAIN_BUTTON_DIAM / 2,
+      left: M_X - MAIN_BUTTON_DIAM / 2,
+      transform: `rotate(${deg}deg)`,
     };
-}
+  }
 
-@Radium
-export default class ExpandingButton extends Component {
-    static defaultProps = {};
-    props : {};
+  childButtonStyle(idx, percent) {
+    const { dX, dY } = deltaPosition(idx, percent);
+    const deg = 360 * percent;
 
-    state = {
-        isOpen: false,
-        buttons: [
-            { handleClick: () => {}, icon: 'comment-o' },
-            { handleClick: () => {}, icon: 'comment-o' },
-            { handleClick: () => {}, icon: 'comment-o' },
-            { handleClick: () => {}, icon: 'comment-o' },
-            { handleClick: () => {}, icon: 'comment-o' },
-        ]
+    return {
+      width: CHILD_BUTTON_DIAM,
+      height: CHILD_BUTTON_DIAM,
+      top: M_Y - dY,
+      left: M_X - dX,
+      transform: `rotate(${deg}deg)`,
     };
+  }
 
-    state : { isOpen: boolean };
+  render() {
+    const { isOpen } = this.state;
+    const goalPercent = isOpen ? 1.0 : 0.0;
 
-    initialChildButtonStyles() {
-        return {
-            width: CHILD_BUTTON_DIAM,
-            height: CHILD_BUTTON_DIAM,
-            top: M_Y - (CHILD_BUTTON_DIAM / 2),
-            left: M_X - (CHILD_BUTTON_DIAM / 2)
-        };
-    }
-
-    getButtonPosition(childIndex) {
-        const { deltaX, deltaY } = finalDeltaPositions(childIndex);
-
-        if (this.state.isOpen) {
-            return {
-                left: spring(M_X + deltaX, BUTTONS_OUT_SPRING),
-                top: spring(M_Y - deltaY, BUTTONS_OUT_SPRING)
-            };
+    const springParams = [210, 20];
+    const defaultStyles = range(CHILDREN_ICONS.length).map(constant({ percent: 0.0 }));
+    const nextStyles = (previousStyles) => {
+      return previousStyles.map((prev, i) => {
+        if (i === 0) {
+          return { percent: spring(goalPercent, springParams) };
+        } else {
+          const lastButtonPreviousPercent = previousStyles[i - 1].percent;
+          const thisButtonPreviousPercent = previousStyles[i].percent;
+          const shouldThisAnimate = isOpen ?
+            lastButtonPreviousPercent > 0.2 :
+            lastButtonPreviousPercent < 0.8;
+          return { percent: shouldThisAnimate ? spring(goalPercent, springParams) : thisButtonPreviousPercent };
         }
+      });
+    };
 
-        return {
-            left: spring(M_X - (CHILD_BUTTON_DIAM / 2), BUTTONS_IN_SPRING),
-            top: spring(M_Y - (CHILD_BUTTON_DIAM / 2), BUTTONS_IN_SPRING),
-        };
-    }
-
-    openMenu() {
-        this.setState({ isOpen: !this.state.isOpen });
-    }
-
-    render() {
-        const { isOpen, buttons } = this.state;
-
-        return (
-            <div>
-                <div style={STYLES.button} onClick={() => this.openMenu()} />
-                {this.renderMenuButtons()}
+    return (
+      <div>
+        <StaggeredMotion defaultStyles={defaultStyles} styles={nextStyles}>
+          {(interpolatedStyles) => {
+            const leaderPercent = interpolatedStyles[0].percent;
+            return <div>
+              {interpolatedStyles.map(({ percent }, idx) => {
+                const style = this.childButtonStyle(idx, percent);
+                return (
+                  <div className="child-button" style={style} key={idx}>
+                    <i className={`fa fa-${CHILDREN_ICONS[idx]}`} />
+                  </div>
+                );
+              })}
+              <div className="main-button" style={this.mainButtonStyles(leaderPercent)} onClick={this.toggleMenu}>
+                <i className="fa fa-plus" />
+              </div>
             </div>
-        );
-    }
+          }}
+        </StaggeredMotion>
+      </div>
+    );
+  }
 
-    renderMenuButtons() {
-        const { isOpen, buttons } = this.state;
-
-        return (
-            buttons.map((button, index) => (
-                <Motion key={index} style={this.getButtonPosition(index)}>
-                    {({ top, left }) => (
-                        <div style={[STYLES.miniButton, { top, left }]}>
-                            <FontAwesome name={button.icon} style={STYLES.icon} />
-                        </div>
-                    )}
-                </Motion>
-            )
-        ));
-    }
-}
-
-const STYLES = {
-    button: {
-        position: 'absolute',
-        top: M_Y - (MAIN_BUTTON_DIAM / 2),
-        left: M_X - (MAIN_BUTTON_DIAM / 2),
-        width: MAIN_BUTTON_DIAM,
-        height: MAIN_BUTTON_DIAM,
-        backgroundColor: '#1976D2',
-        borderRadius: '50%',
-        zIndex: 1,
-        cursor: 'pointer'
-    },
-
-    miniButton: {
-        position: 'absolute',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: CHILD_BUTTON_DIAM,
-        height: CHILD_BUTTON_DIAM,
-        backgroundColor: '#64B5F6',
-        borderRadius: '50%',
-        cursor: 'pointer'
-    },
-
-    icon: {
-        color: 'white'
-    }
+  toggleMenu(e) {
+    e.preventDefault();
+    this.setState(s => ({ isOpen: !s.isOpen }));
+  }
 }

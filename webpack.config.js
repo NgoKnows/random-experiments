@@ -15,7 +15,7 @@ module.exports = {
         path.resolve(ROOT_DIR, 'client', 'js', 'index.js')
     ],
 
-    devtool: 'source-map',
+    // devtool: 'source-map',
 
     resolve: {
         extensions: ['', '.js', '.jsx'],
