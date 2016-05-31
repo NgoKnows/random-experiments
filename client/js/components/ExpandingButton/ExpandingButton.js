@@ -26,7 +26,7 @@ const SEPARATION_ANGLE = 40; // degrees
 const FAN_ANGLE = (NUM_CHILDREN - 1) * SEPARATION_ANGLE; // degrees
 const BASE_ANGLE = ((180 - FAN_ANGLE) / 2); // degrees
 
-const SPRING_CONFIG = { stiffness: 500, damping: 16 };
+const SPRING_CONFIG = { stiffness: 500, damping: 18 };
 const OFFSET = 0.4;
 
 // Utility functions
@@ -50,11 +50,11 @@ export default class ExpandingButton extends Component {
     state = {
         isOpen: false,
         buttons: [
-            { handleClick: () => {}, icon: 'comment-o' },
-            { handleClick: () => {}, icon: 'comment-o' },
-            { handleClick: () => {}, icon: 'comment-o' },
-            { handleClick: () => {}, icon: 'comment-o' },
-            { handleClick: () => {}, icon: 'comment-o' },
+            { handleClick: () => {}, icon: 'gitlab' },
+            { handleClick: () => {}, icon: 'instagram' },
+            { handleClick: () => {}, icon: 'snapchat' },
+            { handleClick: () => {}, icon: 'reddit' },
+            { handleClick: () => {}, icon: 'vine' },
         ]
     };
 
@@ -181,6 +181,7 @@ export default class ExpandingButton extends Component {
                 <Motion style={mainButtonRotation}>
                     {({ rotate }) =>
                         <div
+                            key="mainButton1"
                             style={[STYLES.button, { transform: `rotate(${rotate}deg)` }]}
                             onClick={this.openMenu}
                         >
@@ -191,30 +192,6 @@ export default class ExpandingButton extends Component {
             </div>
         );
     }
-
-    // renderMenuButtons() {
-    //     const { isOpen, buttons } = this.state;
-    //
-    //     const menuButtonStyles = buttons.map((button, index) => getMenuButtonPosition(index));
-    //
-    //     return (
-    //         <StaggeredMotion
-    //             defaultStyles={menuButtonStyles}
-    //         >
-    //         buttons.map((button, index) => (
-    //                 {({ deltaX, deltaY }) => (
-    //                     <div key="index"
-    //                         style={[
-    //                             STYLES.menuButton,
-    //                             { transform: `translate(${deltaX}px, -${deltaY}px)` }
-    //                         ]}
-    //                     >
-    //                         <FontAwesome name={button.icon} style={STYLES.icon} size="2x" />
-    //                     </div>
-    //                 )}
-    //         )
-    //     ));
-    // }
 }
 
 const STYLES = {
@@ -233,7 +210,9 @@ const STYLES = {
         height: MAIN_BUTTON_DIAM,
         borderRadius: '50%',
         zIndex: 2,
-        cursor: 'pointer'
+        cursor: 'pointer',
+        willChange: 'transform'
+
     },
 
     childButton: {
@@ -249,7 +228,8 @@ const STYLES = {
         height: CHILD_BUTTON_DIAM,
         backgroundColor: '#64B5F6',
         borderRadius: '50%',
-        cursor: 'pointer'
+        cursor: 'pointer',
+
     },
 
     icon: {

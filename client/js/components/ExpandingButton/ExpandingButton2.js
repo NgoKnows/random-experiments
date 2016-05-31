@@ -1,118 +1,252 @@
-import React from "react";
+import React, { Component } from 'react';
+import Radium from 'radium';
+import { Motion, StaggeredMotion, spring } from 'react-motion';
+import FontAwesome from 'react-fontawesome';
+import { range } from 'lodash';
 
-import { Motion, StaggeredMotion, spring } from "react-motion";
-import { constant, range } from "lodash";
-
+// Constants
+// ----------------------------
+// Value of 1 degree in radians
 const DEG_TO_RAD = Math.PI / 180;
-const MAIN_BUTTON_DIAM = 100;
-const CHILD_BUTTON_DIAM = 50;
-const CHILDREN_ICONS = [
-  "at", "linkedin", "facebook", "github", "twitter"
-];
 
-const M_X = 500;
+// Diameter of the main button in pixels
+const MAIN_BUTTON_DIAM = 90;
+const CHILD_BUTTON_DIAM = 60;
+
+// The number of child buttons that fly out from the main button
+const NUM_CHILDREN = 5;
+
+// Hard coded position values of the mainButton
+const M_X = 290;
 const M_Y = 450;
 
-const FLYOUT_RADIUS = 120;
-const SEPARATION_ANGLE = 40;
-const FAN_ANGLE = (CHILDREN_ICONS.length - 1) * SEPARATION_ANGLE;
-const BASE_ANGLE = (180 - FAN_ANGLE) / 2;
+// How far away from the main button does the child buttons go
+const FLY_OUT_RADIUS = 120;
+const SEPARATION_ANGLE = 40; // degrees
+const FAN_ANGLE = (NUM_CHILDREN - 1) * SEPARATION_ANGLE; // degrees
+const BASE_ANGLE = ((180 - FAN_ANGLE) / 2); // degrees
 
-const toRadians = (deg) => deg * DEG_TO_RAD;
+const SPRING_CONFIG = { stiffness: 500, damping: 18 };
+const OFFSET = 0.4;
 
-const deltaPosition = (idx, percent) => {
-  const angle = BASE_ANGLE + idx * SEPARATION_ANGLE;
-  const dX = FLYOUT_RADIUS * Math.cos(toRadians(angle)) * percent;
-  const dY = FLYOUT_RADIUS * Math.sin(toRadians(angle)) * percent;
-  return {
-    dX: dX + CHILD_BUTTON_DIAM / 2,
-    dY: dY + CHILD_BUTTON_DIAM / 2
-  };
-};
+// Utility functions
+// -----------------------------------
+const toRadians = (degrees) => degrees * DEG_TO_RAD;
 
-export default class Application extends React.Component {
-  constructor(...args) {
-    super(...args);
-
-    this.state = {
-      isOpen: false
-    };
-
-    this.toggleMenu = this.toggleMenu.bind(this);
-  }
-
-  mainButtonStyles(percent) {
-    const deg = 135 * percent;
+function finalChildDeltaPositions(index) {
+    const angle = BASE_ANGLE + (index * SEPARATION_ANGLE);
 
     return {
-      width: MAIN_BUTTON_DIAM,
-      height: MAIN_BUTTON_DIAM,
-      top: M_Y - MAIN_BUTTON_DIAM / 2,
-      left: M_X - MAIN_BUTTON_DIAM / 2,
-      transform: `rotate(${deg}deg)`,
+        deltaX: FLY_OUT_RADIUS * Math.cos(toRadians(angle)),
+        deltaY: FLY_OUT_RADIUS * Math.sin(toRadians(angle))
     };
-  }
-
-  childButtonStyle(idx, percent) {
-    const { dX, dY } = deltaPosition(idx, percent);
-    const deg = 360 * percent;
-
-    return {
-      width: CHILD_BUTTON_DIAM,
-      height: CHILD_BUTTON_DIAM,
-      top: M_Y - dY,
-      left: M_X - dX,
-      transform: `rotate(${deg}deg)`,
-    };
-  }
-
-  render() {
-    const { isOpen } = this.state;
-    const goalPercent = isOpen ? 1.0 : 0.0;
-
-    const springParams = [210, 20];
-    const defaultStyles = range(CHILDREN_ICONS.length).map(constant({ percent: 0.0 }));
-    const nextStyles = (previousStyles) => {
-      return previousStyles.map((prev, i) => {
-        if (i === 0) {
-          return { percent: spring(goalPercent, springParams) };
-        } else {
-          const lastButtonPreviousPercent = previousStyles[i - 1].percent;
-          const thisButtonPreviousPercent = previousStyles[i].percent;
-          const shouldThisAnimate = isOpen ?
-            lastButtonPreviousPercent > 0.2 :
-            lastButtonPreviousPercent < 0.8;
-          return { percent: shouldThisAnimate ? spring(goalPercent, springParams) : thisButtonPreviousPercent };
-        }
-      });
-    };
-
-    return (
-      <div>
-        <StaggeredMotion defaultStyles={defaultStyles} styles={nextStyles}>
-          {(interpolatedStyles) => {
-            const leaderPercent = interpolatedStyles[0].percent;
-            return <div>
-              {interpolatedStyles.map(({ percent }, idx) => {
-                const style = this.childButtonStyle(idx, percent);
-                return (
-                  <div className="child-button" style={style} key={idx}>
-                    <i className={`fa fa-${CHILDREN_ICONS[idx]}`} />
-                  </div>
-                );
-              })}
-              <div className="main-button" style={this.mainButtonStyles(leaderPercent)} onClick={this.toggleMenu}>
-                <i className="fa fa-plus" />
-              </div>
-            </div>
-          }}
-        </StaggeredMotion>
-      </div>
-    );
-  }
-
-  toggleMenu(e) {
-    e.preventDefault();
-    this.setState(s => ({ isOpen: !s.isOpen }));
-  }
 }
+
+@Radium
+export default class ExpandingButton extends Component {
+    static defaultProps = {};
+    props : {};
+
+    state = {
+        isOpen: false,
+        buttons: [
+            { handleClick: () => {}, icon: 'gitlab' },
+            { handleClick: () => {}, icon: 'instagram' },
+            { handleClick: () => {}, icon: 'snapchat' },
+            { handleClick: () => {}, icon: 'reddit' },
+            { handleClick: () => {}, icon: 'vine' },
+        ]
+    };
+
+    state : { isOpen: boolean };
+
+    constructor(props) {
+        super(props);
+
+        this.openMenu = this.openMenu.bind(this);
+    }
+
+    initialChildButtonStyles() {
+        return {
+            translateX: 0,
+            translateY: 0,
+            rotate: -180,
+            scale: 0.5
+        };
+    }
+
+    finalChildButtonStyles(childIndex) {
+        const { deltaX, deltaY } = finalChildDeltaPositions(childIndex);
+
+        return {
+            translateX: deltaX,
+            translateY: deltaY,
+            rotate: 0,
+            scale: 1
+        };
+    }
+
+    initialChildButtonStylesAnimate() {
+        return {
+            translateX: spring(0, SPRING_CONFIG),
+            translateY: spring(0, SPRING_CONFIG),
+            rotate: spring(-180, SPRING_CONFIG),
+            scale: spring(0.5, SPRING_CONFIG)
+        };
+    }
+
+    finalChildButtonStylesAnimate(childIndex) {
+        const { deltaX, deltaY } = finalChildDeltaPositions(childIndex);
+
+        return {
+            translateX: spring(deltaX, SPRING_CONFIG),
+            translateY: spring(deltaY, SPRING_CONFIG),
+            rotate: spring(0, SPRING_CONFIG),
+            scale: spring(1, SPRING_CONFIG)
+        };
+    }
+
+    openMenu(e) {
+        e.stopPropagation();
+
+        this.setState({ isOpen: !this.state.isOpen });
+    }
+
+    renderChildButtons() {
+        const { isOpen, buttons } = this.state;
+        const defaultButtonStyles = range(buttons.length).map((i) => {
+            return isOpen ?
+                this.finalChildButtonStyles(i) :
+                this.initialChildButtonStyles();
+        });
+
+        const targetButtonStyles = range(buttons.length).map((i) => {
+            return isOpen ?
+                this.finalChildButtonStylesAnimate(i) :
+                this.initialChildButtonStylesAnimate();
+        });
+
+        const scaleMin = this.initialChildButtonStyles().scale;
+        const scaleMax = this.finalChildButtonStyles(0).scale;
+
+        const calculateStylesForNextFrame = (prevFrameStyles) => {
+            const b = isOpen ? prevFrameStyles : prevFrameStyles.slice(0).reverse();
+
+            const nextFrameTargetStyles = b.map((buttonStyleInPreviousFrame, i) => {
+                if (i === 0) {
+                    return targetButtonStyles[i];
+                }
+
+                const prevButtonScale = b[i - 1].scale;
+                const shouldApplyTargetStyle = () => {
+                    if (isOpen) {
+                        return prevButtonScale >= scaleMin + OFFSET;
+                    } else {
+                        return prevButtonScale <= scaleMax - OFFSET;
+                    }
+                };
+
+                return shouldApplyTargetStyle() ?
+                    targetButtonStyles[i] :
+                    buttonStyleInPreviousFrame;
+            });
+
+            return isOpen ? nextFrameTargetStyles : nextFrameTargetStyles.reverse();
+        };
+
+        return (
+            <StaggeredMotion
+                defaultStyles={defaultButtonStyles}
+                styles={calculateStylesForNextFrame}
+            >
+                {interpolatedStyles =>
+                    <div>
+                        {interpolatedStyles.map(({ translateX, translateY, rotate, scale }, index) => {
+                            return(
+                            <div
+                                key={index}
+                                style={[STYLES.childButton, { transform:
+                                    `translate(${translateX}px, -${translateY}px) rotate(${rotate}deg) scale(${scale})` }]}
+                            >
+                                <FontAwesome name={buttons[index].icon} style={STYLES.icon} size="2x" />
+                            </div>
+                        )})}
+                    </div>
+                }
+            </StaggeredMotion>
+        );
+    }
+
+    render() {
+        const { isOpen } = this.state;
+        const mainButtonRotation = isOpen ?
+            { rotate: spring(0, { stiffness : 500, damping : 30 }) } :
+            { rotate: spring(-135, { stiffness : 500, damping : 30 }) };
+
+        return (
+            <div>
+                {this.renderChildButtons()}
+                <Motion style={mainButtonRotation}>
+                    {({ rotate }) =>
+                        <div
+                            key="mainButton"
+                            style={[STYLES.button, { transform: `rotate(${rotate}deg)` }]}
+                            onClick={this.openMenu}
+                        >
+                            <FontAwesome name="times" style={STYLES.icon} size="3x" />
+                        </div>
+                    }
+                </Motion>
+            </div>
+        );
+    }
+}
+
+const STYLES = {
+    button: {
+        // layout
+        position: 'absolute',
+        top: M_Y - (MAIN_BUTTON_DIAM / 2),
+        left: M_X - (MAIN_BUTTON_DIAM / 2),
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+
+        // presentational
+        backgroundColor: '#1976D2',
+        width: MAIN_BUTTON_DIAM,
+        height: MAIN_BUTTON_DIAM,
+        borderRadius: '50%',
+        zIndex: 2,
+        cursor: 'pointer',
+        willChange: 'transform'
+
+    },
+
+    childButton: {
+        // layout
+        position: 'absolute',
+        top: M_Y - (CHILD_BUTTON_DIAM / 2),
+        left: M_X - (CHILD_BUTTON_DIAM / 2),
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        willChange: 'transform',
+
+        // presentational
+        width: CHILD_BUTTON_DIAM,
+        height: CHILD_BUTTON_DIAM,
+        backgroundColor: '#64B5F6',
+        borderRadius: '50%',
+        cursor: 'pointer',
+
+        // ':focus' : {
+        //     outline: 0
+        // }
+    },
+
+    icon: {
+        color: 'white',
+        zIndex: 2
+    }
+};
