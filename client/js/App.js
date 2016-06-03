@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import ExpandingButton from 'components/ExpandingButton/ExpandingButton';
 import ExpandingButton2 from 'components/ExpandingButton/ExpandingButton2';
+import ExpandingList from 'components/ExpandingList/ExpandingList';
 
 export default class App extends Component {
     static defaultProps = {};
@@ -12,8 +13,7 @@ export default class App extends Component {
 
         return (
             <div style={STYLES}>
-                <ExpandingButton />
-                <ExpandingButton2 />
+                <ExpandingList />
             </div>
         );
     }
