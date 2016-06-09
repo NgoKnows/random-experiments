@@ -1,5 +1,5 @@
 {
-  "name": "storybook-boilerplate",
+  "name": "random-experiments",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NgoKnows/storybook-boilerplate.git"
+    "url": "git+https://github.com/NgoKnows/random-experiments.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/NgoKnows/storybook-boilerplate/issues"
+    "url": "https://github.com/NgoKnows/random-experiments/issues"
   },
-  "homepage": "https://github.com/NgoKnows/storybook-boilerplate#readme",
+  "homepage": "https://github.com/NgoKnows/random-experiments#readme",
   "devDependencies": {
     "@kadira/storybook": "^1.28.1",
     "babel-core": "^6.9.0",

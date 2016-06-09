@@ -9,7 +9,12 @@ import webpackHotMiddleware from 'koa-webpack-hot-middleware';
 
 import webpack from 'webpack';
 
-const config = require('./webpack.config');
+let config;
+if (process.env.NODE_ENV !== 'production') {
+    config = require('./webpack.config.dev');
+} else {
+    config = require('./webpack.config.prod');
+}
 
 const compiler = webpack(config);
 
