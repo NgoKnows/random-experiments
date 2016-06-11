@@ -26,10 +26,10 @@ export default class ListItem extends Component {
         const { offsetX, touchStart } = this.state;
 
         // handle click only if off set is not zero
-        // onClick={() => this.handleClick()}
         return (
             <div
                 style={[STYLES.listItem(offsetX, touchStart), this.getListItemStyle()]}
+                onClick={() => this.handleClick()}
                 onMouseDown={this.handleMouseDown}
                 onMouseUp={this.handleMouseUp}
                 draggable={false}
@@ -39,7 +39,6 @@ export default class ListItem extends Component {
     }
 
     handleClick() {
-        console.log(this.state.offsetX)
         if (!this.state.offsetX) {
             this.props.handleClick();
         }
@@ -84,7 +83,7 @@ const STYLES = {
         margin: 15,
         backgroundColor: '#00796B',
         boxShadow: '0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)',
-        // transition: 'transform .5s cubic-bezier(.25,.8,.25,1)',
+        transition: 'transform .5s cubic-bezier(.25,.8,.25,1)',
         transform: `translateX(${offsetX}px)`,
         willChange: touchStart ? 'transform' : ''
     }),

@@ -6,44 +6,20 @@ import { range } from 'lodash';
 
 // Constants
 // ----------------------------
-// Value of 1 degree in radians
-const DEG_TO_RAD = Math.PI / 180;
 
 // Diameter of the main button in pixels
 const MAIN_BUTTON_DIAM = 90;
 const CHILD_BUTTON_DIAM = 60;
 
-// The number of child buttons that fly out from the main button
-const NUM_CHILDREN = 5;
-
 // Hard coded position values of the mainButton
-const M_X = 290;
+const M_X = 590;
 const M_Y = 450;
-
-// How far away from the main button does the child buttons go
-const FLY_OUT_RADIUS = 120;
-const SEPARATION_ANGLE = 40; // degrees
-const FAN_ANGLE = (NUM_CHILDREN - 1) * SEPARATION_ANGLE; // degrees
-const BASE_ANGLE = ((180 - FAN_ANGLE) / 2); // degrees
 
 const SPRING_CONFIG = { stiffness: 500, damping: 18 };
 const OFFSET = 0.4;
 
-// Utility functions
-// -----------------------------------
-const toRadians = (degrees) => degrees * DEG_TO_RAD;
-
-function finalChildDeltaPositions(index) {
-    const angle = BASE_ANGLE + (index * SEPARATION_ANGLE);
-
-    return {
-        deltaX: FLY_OUT_RADIUS * Math.cos(toRadians(angle)),
-        deltaY: FLY_OUT_RADIUS * Math.sin(toRadians(angle))
-    };
-}
-
 @Radium
-export default class ExpandingButton extends Component {
+export default class VerticalExpandingButton extends Component {
     static defaultProps = {};
     props : {};
 
@@ -66,6 +42,28 @@ export default class ExpandingButton extends Component {
         this.openMenu = this.openMenu.bind(this);
     }
 
+    finalChildDeltaPositions(index) {
+        const { direction } = this.props;
+
+        let delta = index * (CHILD_BUTTON_DIAM + 10) + MAIN_BUTTON_DIAM;
+
+        if (direction === 'up' || direction === 'left') {
+            delta *= -1;
+        }
+
+        if (direction === 'up' || direction === 'down') {
+            return {
+                deltaX: 0,
+                deltaY: delta
+            };
+        }
+
+        return {
+            deltaX: delta,
+            deltaY: 0
+        };
+    }
+
     initialChildButtonStyles() {
         return {
             translateX: 0,
@@ -76,7 +74,7 @@ export default class ExpandingButton extends Component {
     }
 
     finalChildButtonStyles(childIndex) {
-        const { deltaX, deltaY } = finalChildDeltaPositions(childIndex);
+        const { deltaX, deltaY } = this.finalChildDeltaPositions(childIndex);
 
         return {
             translateX: deltaX,
@@ -86,23 +84,25 @@ export default class ExpandingButton extends Component {
         };
     }
 
-    initialChildButtonStylesAnimate() {
+    initialChildButtonStylesAnimate(childIndex) {
+        const b = { stiffness: 350 + childIndex * 75, damping: 24 };
+
         return {
-            translateX: spring(0, SPRING_CONFIG),
-            translateY: spring(0, SPRING_CONFIG),
-            rotate: spring(-180, SPRING_CONFIG),
-            scale: spring(0.5, SPRING_CONFIG)
+            translateX: spring(0, b),
+            translateY: spring(0, b),
+            rotate: spring(-180, b),
+            scale: spring(0.5, b)
         };
     }
 
     finalChildButtonStylesAnimate(childIndex) {
-        const { deltaX, deltaY } = finalChildDeltaPositions(childIndex);
+        const { deltaX, deltaY } = this.finalChildDeltaPositions(childIndex);
 
         return {
-            translateX: spring(deltaX, SPRING_CONFIG),
-            translateY: spring(deltaY, SPRING_CONFIG),
-            rotate: spring(0, SPRING_CONFIG),
-            scale: spring(1, SPRING_CONFIG)
+            translateX: spring(deltaX, { stiffness: 500, damping: 18 }),
+            translateY: spring(deltaY, { stiffness: 500, damping: 18 }),
+            rotate: spring(0, { stiffness: 500, damping: 18 }),
+            scale: spring(1, { stiffness: 500, damping: 18 })
         };
     }
 
@@ -123,7 +123,7 @@ export default class ExpandingButton extends Component {
         const targetButtonStyles = range(buttons.length).map((i) => {
             return isOpen ?
                 this.finalChildButtonStylesAnimate(i) :
-                this.initialChildButtonStylesAnimate();
+                this.initialChildButtonStylesAnimate(i);
         });
 
         const scaleMin = this.initialChildButtonStyles().scale;
@@ -161,16 +161,19 @@ export default class ExpandingButton extends Component {
             >
                 {interpolatedStyles =>
                     <div>
-                        {interpolatedStyles.map(({ translateX, translateY, rotate, scale }, index) => {
-                            return(
+                        {interpolatedStyles.map(({ translateX, translateY, rotate, scale }, index) => (
                             <div
                                 key={index}
                                 style={[STYLES.childButton, { transform:
-                                    `translate(${translateX}px, -${translateY}px) rotate(${rotate}deg) scale(${scale})` }]}
+                                    `translate(${translateX}px, ${translateY}px) rotate(${rotate}deg) scale(${scale})` }]}
                             >
-                                <FontAwesome name={buttons[index].icon} style={STYLES.icon} size="2x" />
+                                <FontAwesome
+                                    name={buttons[index].icon}
+                                    style={STYLES.icon}
+                                    size="2x"
+                                />
                             </div>
-                        )})}
+                        ))}
                     </div>
                 }
             </StaggeredMotion>
@@ -184,7 +187,7 @@ export default class ExpandingButton extends Component {
             { rotate: spring(-135, { stiffness : 500, damping : 30 }) };
 
         return (
-            <div>
+            <div style={STYLES.container}>
                 {this.renderChildButtons()}
                 <Motion style={mainButtonRotation}>
                     {({ rotate }) =>
@@ -203,11 +206,12 @@ export default class ExpandingButton extends Component {
 }
 
 const STYLES = {
+    container: {
+        position: 'relative'
+    },
+
     button: {
         // layout
-        position: 'absolute',
-        top: M_Y - (MAIN_BUTTON_DIAM / 2),
-        left: M_X - (MAIN_BUTTON_DIAM / 2),
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -220,18 +224,16 @@ const STYLES = {
         zIndex: 2,
         cursor: 'pointer',
         willChange: 'transform'
-
     },
 
     childButton: {
         // layout
         position: 'absolute',
-        top: M_Y - (CHILD_BUTTON_DIAM / 2),
-        left: M_X - (CHILD_BUTTON_DIAM / 2),
+        top: CHILD_BUTTON_DIAM / 4,
+        left: CHILD_BUTTON_DIAM / 4,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        willChange: 'transform',
 
         // presentational
         width: CHILD_BUTTON_DIAM,
@@ -239,10 +241,7 @@ const STYLES = {
         backgroundColor: '#64B5F6',
         borderRadius: '50%',
         cursor: 'pointer',
-
-        // ':focus' : {
-        //     outline: 0
-        // }
+        willChange: 'transform'
     },
 
     icon: {

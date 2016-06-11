@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
-import ExpandingButton from 'components/ExpandingButton/ExpandingButton';
-import ExpandingButton2 from 'components/ExpandingButton/ExpandingButton2';
-import ExpandingList from 'components/ExpandingList/ExpandingList';
-
+import CircularExpandingButton from 'components/ExpandingButton/CircularExpandingButton';
+import VerticalExpandingButton from 'components/ExpandingButton/VerticalExpandingButton';
 export default class App extends Component {
     static defaultProps = {};
     props: {};
@@ -13,13 +11,21 @@ export default class App extends Component {
 
         return (
             <div style={STYLES}>
-                <ExpandingList />
+                <CircularExpandingButton />
+                <VerticalExpandingButton direction="up" />
+                <VerticalExpandingButton direction="down" />
+                <VerticalExpandingButton direction="left" />
+                <VerticalExpandingButton direction="right" />
             </div>
         );
     }
 }
 
 const STYLES = {
-    height: 2000,
-    width: 2000
+    height: 1000,
+    width: 1500,
+    fontFamily: 'Lato',
+    display: 'flex',
+    justifyContent: 'space-around',
+    alignItems: 'center'
 };
