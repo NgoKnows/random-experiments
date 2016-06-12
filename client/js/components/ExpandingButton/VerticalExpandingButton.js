@@ -85,7 +85,7 @@ export default class VerticalExpandingButton extends Component {
     }
 
     initialChildButtonStylesAnimate(childIndex) {
-        const b = { stiffness: 350 + childIndex * 75, damping: 24 };
+        const b = { stiffness: 300 + childIndex * 75, damping: 24 };
 
         return {
             translateX: spring(0, b),

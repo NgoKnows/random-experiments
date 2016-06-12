@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "NODE_ENV=development node server.babel.js",
+    "serve": "NODE_ENV=production node server.babel.js",
     "storybook": "start-storybook -p 9001"
   },
   "repository": {

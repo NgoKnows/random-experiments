@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import CircularExpandingButton from 'components/ExpandingButton/CircularExpandingButton';
 import VerticalExpandingButton from 'components/ExpandingButton/VerticalExpandingButton';
+import DraggableGrid from 'components/DraggableGrid/DraggableGrid';
+
 export default class App extends Component {
     static defaultProps = {};
     props: {};
@@ -8,14 +10,15 @@ export default class App extends Component {
 
     render() {
         const { } = this.props;
+        // <CircularExpandingButton />
+        // <VerticalExpandingButton direction="up" />
+        // <VerticalExpandingButton direction="down" />
+        // <VerticalExpandingButton direction="left" />
+        // <VerticalExpandingButton direction="right" />
 
         return (
             <div style={STYLES}>
-                <CircularExpandingButton />
-                <VerticalExpandingButton direction="up" />
-                <VerticalExpandingButton direction="down" />
-                <VerticalExpandingButton direction="left" />
-                <VerticalExpandingButton direction="right" />
+                <DraggableGrid />
             </div>
         );
     }
@@ -25,7 +28,5 @@ const STYLES = {
     height: 1000,
     width: 1500,
     fontFamily: 'Lato',
-    display: 'flex',
-    justifyContent: 'space-around',
-    alignItems: 'center'
+    margin: 100
 };
