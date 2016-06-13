@@ -1,32 +1,64 @@
 import React, { Component } from 'react';
-import CircularExpandingButton from 'components/ExpandingButton/CircularExpandingButton';
-import VerticalExpandingButton from 'components/ExpandingButton/VerticalExpandingButton';
-import DraggableGrid from 'components/DraggableGrid/DraggableGrid';
+import Radium from 'radium';
+import { Motion, spring } from 'react-motion';
 
+@Radium
 export default class App extends Component {
     static defaultProps = {};
     props: {};
-    state: void;
+    state = { rotated: false };
+    state: { rotated: boolean };
 
     render() {
-        const { } = this.props;
-        // <CircularExpandingButton />
-        // <VerticalExpandingButton direction="up" />
-        // <VerticalExpandingButton direction="down" />
-        // <VerticalExpandingButton direction="left" />
-        // <VerticalExpandingButton direction="right" />
+        const { rotated } = this.state;
+
+        const mainButtonRotation = this.state.rotated ?
+            { rotate: spring(-135, { stiffness : 500, damping : 30 }) } :
+            { rotate: spring(0, { stiffness : 500, damping : 30 }) };
 
         return (
-            <div style={STYLES}>
-                <DraggableGrid />
+            <div style={STYLES.container}>
+                <Motion style={mainButtonRotation}>
+                    {({ rotate }) =>
+                        <div
+                            key="mainButton"
+                            style={[STYLES.button, { transform: `rotate(${rotate}deg)` }]}
+                            onClick={() => this.setState({ rotated: !rotated })}
+                        >
+                            <span>X</span>
+                        </div>
+                    }
+                </Motion>
             </div>
         );
     }
 }
 
 const STYLES = {
-    height: 1000,
-    width: 1500,
-    fontFamily: 'Lato',
-    margin: 100
+    container: {
+        height: 1000,
+        width: 1500,
+        fontFamily: 'Lato',
+        margin: 100
+    },
+
+    button: {
+        // layout
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+
+        // presentational
+        backgroundColor: '#1976D2',
+        width: 100,
+        height: 100,
+        borderRadius: '50%',
+        cursor: 'pointer',
+        willChange: 'transform',
+
+        ':hover': {
+            opacity: 0.5
+        }
+    }
+
 };

@@ -2,11 +2,6 @@ var path = require('path');
 var webpack = require('webpack');
 var ROOT_DIR = __dirname;
 
-// PostCSS plugins
-const cssnext = require('postcss-cssnext');
-const postcssFocus = require('postcss-focus');
-const postcssReporter = require('postcss-reporter');
-
 module.exports = {
     context: ROOT_DIR,
 
@@ -59,7 +54,7 @@ module.exports = {
 
             {
                 test: /\.css$/,
-                loader: 'style-loader!css-loader!postcss-loader'
+                loader: 'style-loader!css-loader'
             },
 
             {
@@ -67,15 +62,5 @@ module.exports = {
                 loader: 'json-loader'
             }
         ]
-    },
-
-    postcss: () => (
-        [
-            postcssFocus(), // Add a :focus to every :hover
-            cssnext(),
-            postcssReporter({ // Posts messages from plugins to the terminal
-                clearMessages: true,
-            })
-        ]
-    )
+    }
 };
